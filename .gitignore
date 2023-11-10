@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+*.bin
+
+# test files
+test.cpp
+test
+test1.cpp
+test1

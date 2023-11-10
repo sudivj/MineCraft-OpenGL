@@ -12,8 +12,31 @@
 
 using namespace BLOCKS;
 
-const int worldX = 6;
-const int worldY = 6;
+const int worldX = 4;
+const int worldY = 4;
+
+void renderBlockFace(Chunk chunk, int x, int y, int z) {
+    BLOCKS::BlockState block = chunk.returnBlockState(x, y, z + 1);
+    if (block != BlockState::SOLID)
+        glDrawArrays(GL_TRIANGLES, 0 * 6, 6);
+    block = chunk.returnBlockState(x, y, z - 1);
+    if (block != BlockState::SOLID)
+        glDrawArrays(GL_TRIANGLES, 1 * 6, 6);
+    block = chunk.returnBlockState(x + 1, y, z);
+    if (block != BlockState::SOLID)
+        glDrawArrays(GL_TRIANGLES, 2 * 6, 6);
+    block = chunk.returnBlockState(x - 1, y, z);
+    if (block != BlockState::SOLID)
+        glDrawArrays(GL_TRIANGLES, 3 * 6, 6);
+    block = chunk.returnBlockState(x, y + 1, z);
+    if (block != BlockState::SOLID)
+        glDrawArrays(GL_TRIANGLES, 4 * 6, 6);
+    block = chunk.returnBlockState(x, y - 1, z);
+    if (block != BlockState::SOLID)
+        glDrawArrays(GL_TRIANGLES, 5 * 6, 6);
+
+    //glCullFace(GL_BACK);
+}
 
 class WorldGeneration
 {
@@ -40,11 +63,18 @@ class WorldGeneration
                         // int currentBlockstate = current_chunk.returnBlockState(x, y, z);
                         if (current_chunk.returnBlockState(x, y, z) == BlockState::SOLID)
                         {
+                            float alphaMap[] = {0.25, 0.25, 0.25, 0.25, 0.1, 0.4};
                             glm::mat4 model = glm::mat4(1.0f);
                             model = glm::translate(model, glm::vec3((float)(x + 1) + (l * wLen), (float)y, (float)(z + 1) + (b * wWid)));
                             // shader.setMat4("model", model);
                             glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-                            glDrawArrays(GL_TRIANGLES, 0, 36);
+                            //renderBlockFace(current_chunk, x, y, z);
+                            for (int i = 0; i < 6; i++)
+                            {
+                                glUniform1f(glGetUniformLocation(shaderID, "alpha"), alphaMap[i]);
+                                glDrawArrays(GL_TRIANGLES, i * 6, 6);
+                            }
+                            
                         }
                     }
                 }

@@ -1,6 +1,7 @@
 #include "../../include/FastNoiseLite.h"
 #include <math.h>
 #include <iostream>
+#include "block.hpp"
 
 FastNoiseLite terrain;
 FastNoiseLite terrainHeight;
@@ -13,6 +14,7 @@ const int h = 20;
 
 namespace BLOCKS{
     enum BlockState {
+        NULLBLOCK,
         AIR,
         SOLID,
         WATER

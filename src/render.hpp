@@ -79,8 +79,8 @@ void initTextures(Shader shaderClass)
 
     stbi_set_flip_vertically_on_load(true);
 
-    texture1 = ourTexture.genTexture(1, "assets/container.jpg", glTYPE::GLRGB);
-    texture2 = ourTexture.genTexture(1, "assets/awesomeface.png", glTYPE::GLRGBA);
+    texture1 = ourTexture.genTexture(1, "assets/GrassBlock_TOP.jpg", glTYPE::GLRGB);
+    texture2 = ourTexture.genTexture(1, "assets/gamma_image.jpg", glTYPE::GLRGB);
 
     shaderClass.use();
     shaderClass.setInt("texture1", 0);
