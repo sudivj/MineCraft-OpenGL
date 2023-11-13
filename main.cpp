@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/io.hpp>
 
 #include "src/render.hpp"
 #include "src/keyInput.hpp"
@@ -28,6 +29,10 @@ float lastFrame = 0.0f;
 
 int main()
 {
+    int printPos = 0;
+    cout << "Print position?(0 - do not print | 1 - print)" << endl;
+    cin >> printPos;
+    
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -63,6 +68,8 @@ int main()
     initTextures(ourShader);
 
     initWorld();
+    glm::vec3 tempPos = camera.Position;
+
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -73,6 +80,12 @@ int main()
         // processInput(window, camera, deltaTime);
 
         render(window, ourShader, transform, camera, deltaTime);
+        if (tempPos != camera.Position && printPos == 1)
+        {
+            cout << camera.Position << endl;
+            glm::vec3 tempPos = camera.Position;
+        }
+        
     }
 
     return 0;

@@ -35,7 +35,7 @@ void drawObjects(Shader shaderClass, movement transformClass, Camera camera);
 
 void render(GLFWwindow *window, Shader shaderClass, movement transformClass, Camera camera, float delta)
 {        
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.212f, 0.78f, 0.949f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     drawObjects(shaderClass, transformClass, camera);
