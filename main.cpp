@@ -19,7 +19,8 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+// Camera camera(glm::vec3((float)(16 * 2 + 16 / 2), 15.0f, (float)(16 * 2 + 16 / 2)));
+Camera camera(glm::vec3(0.0, 0.0, 0.0));
 float lastX = SCREENWIDTH / 2.0f;
 float lastY = SCREENHEIGHT / 2.0f;
 bool firstMouse = true;
@@ -27,12 +28,10 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-int main()
+int main(int argc, char* argv[])
 {
-    int printPos = 0;
-    cout << "Print position?(0 - do not print | 1 - print)" << endl;
-    cin >> printPos;
-    
+    string str = argv[1];
+
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -60,7 +59,7 @@ int main()
         return -1;
     }
 
-    Shader ourShader("src/Shaders/shader.vert", "src/Shaders/shader.frag");
+    Shader ourShader("src/Shaders/shaderVert.glsl", "src/Shaders/shaderFrag.glsl");
     movement transform(ourShader);
 
     initialization();
@@ -75,12 +74,16 @@ int main()
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
         // cout << deltaTime << endl;
         processInput(window);
+        updatePlayerChunk((long int)camera.Position.x, (long int)camera.Position.z);
         // processInput(window, camera, deltaTime);
 
         render(window, ourShader, transform, camera, deltaTime);
-        if (tempPos != camera.Position && printPos == 1)
+        if (tempPos != camera.Position && *argv[1] == '1')
         {
             cout << camera.Position << endl;
             glm::vec3 tempPos = camera.Position;

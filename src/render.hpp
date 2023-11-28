@@ -23,9 +23,6 @@
 #include "cubeData.hpp"
 #include "movement.hpp"
 
-
-WorldGeneration world;
-
 unsigned int VBO, VAO, EBO;
 
 unsigned int texture1;
@@ -70,7 +67,7 @@ void initialization()
 
     glBindVertexArray(0);
 
-    world.generateWorld();
+    generateWorld();
 }
 
 void initTextures(Shader shaderClass)
@@ -113,5 +110,5 @@ void drawObjects(Shader shaderClass, movement transformClass, Camera camera)
     
     glm::mat4 view = camera.GetViewMatrix();
     shaderClass.setMat4("view", view);
-    world.renderWorld(shaderClass);
+    renderWorld(shaderClass);
 }

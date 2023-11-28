@@ -11,103 +11,148 @@
 #include "../../include/shader.h"
 
 using namespace BLOCKS;
+using namespace std;
 
-const int worldX = 1;
-const int worldY = 1;
+const int worldX = 3;
+const int worldY = 3;
 
-void renderBlockFace(Chunk chunk, int x, int y, int z)
+int playerChunk[] = {0, 0};
+long int world[worldX][worldY];
+
+float wOff = 0;
+
+int x, y, z;
+
+unsigned int shaderID;
+
+void updatePlayerChunk(int camx, int camz)
 {
-    BLOCKS::BlockState block = chunk.returnBlockState(x, y, z + 1);
-    if (block != BlockState::SOLID)
-        glDrawArrays(GL_TRIANGLES, 0 * 6, 6);
-    block = chunk.returnBlockState(x, y, z - 1);
-    if (block != BlockState::SOLID)
-        glDrawArrays(GL_TRIANGLES, 1 * 6, 6);
-    block = chunk.returnBlockState(x + 1, y, z);
-    if (block != BlockState::SOLID)
-        glDrawArrays(GL_TRIANGLES, 2 * 6, 6);
-    block = chunk.returnBlockState(x - 1, y, z);
-    if (block != BlockState::SOLID)
-        glDrawArrays(GL_TRIANGLES, 3 * 6, 6);
-    block = chunk.returnBlockState(x, y + 1, z);
-    if (block != BlockState::SOLID)
-        glDrawArrays(GL_TRIANGLES, 4 * 6, 6);
-    block = chunk.returnBlockState(x, y - 1, z);
-    if (block != BlockState::SOLID)
-        glDrawArrays(GL_TRIANGLES, 5 * 6, 6);
-
-    // glCullFace(GL_BACK);
+    // if ((camx > playerChunk[0] * 16) || (camx < playerChunk[0] * 16))
+    // {
+    //     cout << playerChunk[0] << " " << playerChunk[1] << endl;
+    // }
+    // if ((camz > playerChunk[1] * 16) || (camz < playerChunk[0] * 16))
+    // {
+    //     cout << playerChunk[0] << " " << playerChunk[1] << endl;
+    // }
+    playerChunk[0] += (camx > (playerChunk[0] * 16) + 16);
+    playerChunk[0] -= (camx < (playerChunk[0] * 16));
+    playerChunk[1] += (camz > (playerChunk[1] * 16) + 16);
+    playerChunk[1] -= (camz < (playerChunk[1] * 16));
 }
 
-bool blockShade(Chunk chunk, int x, int y, int z)
+// Send Matrix To Vertex Shader
+void setModelMetrix(int indexX, int indexY)
+{
+    glm::mat4 model = glm::mat4(1.0f);
+    float sendX = (float)(x + 1) + (l * indexX);
+    float sendY = (float)y;
+    float sendZ = (float)(z + 1) + (b * indexY);
+    model = glm::translate(model, glm::vec3(sendX, sendY, sendZ));
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+}
+
+// Check Block Shadow
+bool blockShade(int i, int j)
 {
     int shadows = 0;
-    shadows += (bool)(chunk.returnBlockState(x, y + 1, z - 1) == BlockState::SOLID);
-    shadows += (bool)(chunk.returnBlockState(x, y + 1, z + 1) == BlockState::SOLID);
-    shadows += (bool)(chunk.returnBlockState(x - 1, y + 1, z) == BlockState::SOLID);
-    shadows += (bool)(chunk.returnBlockState(x + 1, y + 1, z) == BlockState::SOLID);
-    shadows += (bool)(chunk.returnBlockState(x - 1, y + 1, z + 1) == BlockState::SOLID);
-    shadows += (bool)(chunk.returnBlockState(x + 1, y + 1, z - 1) == BlockState::SOLID);
-    shadows += (bool)(chunk.returnBlockState(x + 1, y + 1, z + 1) == BlockState::SOLID);
-    shadows = shadows * (bool)(chunk.returnBlockState(x, y + 1, z) == BlockState::AIR);
+    shadows += (int)(returnBlockState(x, y + 1, z - 1, i, j) == BlockState::SOLID);
+    shadows += (int)(returnBlockState(x, y + 1, z + 1, i, j) == BlockState::SOLID);
+    shadows += (int)(returnBlockState(x - 1, y + 1, z, i, j) == BlockState::SOLID);
+    shadows += (int)(returnBlockState(x + 1, y + 1, z, i, j) == BlockState::SOLID);
+    shadows += (int)(returnBlockState(x - 1, y + 1, z - 1, i, j) == BlockState::SOLID);
+    shadows += (int)(returnBlockState(x - 1, y + 1, z + 1, i, j) == BlockState::SOLID);
+    shadows += (int)(returnBlockState(x + 1, y + 1, z - 1, i, j) == BlockState::SOLID);
+    shadows += (int)(returnBlockState(x + 1, y + 1, z + 1, i, j) == BlockState::SOLID);    
+    shadows = shadows * (bool)(returnBlockState(x, y + 1, z, i, j) == BlockState::AIR);
 
     return (shadows > 0);
 }
 
-class WorldGeneration
+// Face Culling
+int getBlockNeighbours(int i, int j, int side)
 {
-public:
-    void generateWorld()
+    bool block[6] = {0, 0, 0, 0, 0, 0};
+    block[0] = (bool)((returnBlockState(x, y, z + 1, i, j) == BlockState::SOLID) && z != (j * b) + (b + 1));
+    block[1] = (bool)((returnBlockState(x, y, z - 1, i, j) == BlockState::SOLID) && z != 0);
+    block[2] = (bool)((returnBlockState(x + 1, y, z, i, j) == BlockState::SOLID) && x != (i * l) + (l - 1));
+    block[3] = (bool)((returnBlockState(x - 1, y, z, i, j) == BlockState::SOLID) && x != 0);
+    block[4] = (bool)((returnBlockState(x, y + 1, z, i, j) == BlockState::SOLID));
+    block[5] = (bool)((returnBlockState(x, y - 1, z, i, j) == BlockState::SOLID) && y != 0);
+    return (block[side] != true);
+}
+
+//Get number of neighbouring blocks
+int getBlockNeighbours(int i, int j)
+{
+    bool block[6] = {0, 0, 0, 0, 0, 0};
+    block[0] = (bool)((returnBlockState(x, y, z + 1, i, j) == BlockState::SOLID) && z != (j * b) + (b + 1));
+    block[1] = (bool)((returnBlockState(x, y, z - 1, i, j) == BlockState::SOLID) && z != 0);
+    block[2] = (bool)((returnBlockState(x + 1, y, z, i, j) == BlockState::SOLID) && x != (i * l) + (l - 1));
+    block[3] = (bool)((returnBlockState(x - 1, y, z, i, j) == BlockState::SOLID) && x != 0);
+    block[4] = (bool)((returnBlockState(x, y + 1, z, i, j) == BlockState::SOLID));
+    block[5] = (bool)((returnBlockState(x, y - 1, z, i, j) == BlockState::SOLID) && y != 0);
+    return block[0] + block[1] + block[2] + block[3] + block[4] + block[5];
+}
+
+void drawBlock(int i, int j)
+{
+    float alphaMap[] = {0.15, 0.20, 0.25, 0.30, 0.1 + (float)(0.1 * blockShade(i, j)), 0.4};
+    float range = -0.15;
+    if(getBlockNeighbours(i, j) != 6)
     {
-        for (int i = 0; i < worldX; i++)
+        for (int f = 1; f < 6 + 1; f++)
         {
-            for (int j = 0; j < worldY; j++)
-            {
-                world[i][j] = new Chunk(i, j);
-                world[i][j]->generateChunk();
-            }
+            glUniform1f(glGetUniformLocation(shaderID, "alpha"), alphaMap[f - 1] + range);
+            setModelMetrix(i, j);
+            glDrawArrays(GL_TRIANGLES, (f * getBlockNeighbours(i, j, f - 1)) * 6, 6);
         }
     }
-    void renderChunk(Chunk current_chunk, unsigned int shaderID, int wLen, int wWid)
+}
+
+// Render Current Chunk
+void renderChunk(int indexX, int indexY)
+{
+    for (x = 0; x < l; x++)
     {
-        for (int x = 0; x < l; x++)
+        for (z = 0; z < b; z++)
         {
-            for (int z = 0; z < b; z++)
+            for (y = 0; y < h; y++)
             {
-                for (int y = 0; y < h; y++)
+                if (returnBlockState(x + wOff, y, z + wOff, indexX, indexY) == BlockState::SOLID)
                 {
-                    // int currentBlockstate = current_chunk.returnBlockState(x, y, z);
-                    if (current_chunk.returnBlockState(x, y, z) == BlockState::SOLID)
-                    {
-                        float alphaMap[] = {0.15, 0.20, 0.25, 0.30, 0.1 + ((float)0.5 * (float)blockShade(current_chunk, x, y, z)), 0.4};
-                        glm::mat4 model = glm::mat4(1.0f);
-                        model = glm::translate(model, glm::vec3((float)(x + 1) + (l * wLen), (float)y, (float)(z + 1) + (b * wWid)));
-                        // shader.setMat4("model", model);
-                        glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-                        // renderBlockFace(current_chunk, x, y, z);
-                        for (int i = 0; i < 6; i++)
-                        {
-                            float range = -0.15;
-                            glUniform1f(glGetUniformLocation(shaderID, "alpha"), alphaMap[i] + range);
-                            glDrawArrays(GL_TRIANGLES, i * 6, 6);
-                        }
-                    }
+                    drawBlock(indexX, indexY);
                 }
             }
         }
     }
-    void renderWorld(Shader shader)
-    {
-        unsigned int shaderID = shader.ID;
-        for (int i = 0; i < worldX; i++)
-        {
-            for (int j = 0; j < worldY; j++)
-            {
-                renderChunk(*world[i][j], shaderID, i, j);
-            }
-        }
-    }
+}
 
-private:
-    Chunk *world[worldX][worldY];
-};
+void renderWorld(Shader shader)
+{
+    shaderID = shader.ID;
+    int startI = 0;
+    int startJ = 0;
+    if (worldX != 1)
+    {
+        startI = (worldX - 1) / 2;
+    }
+    if (worldX != 1)
+    {
+        startJ = (worldY - 1) / 2;
+    }
+    for (int i = -startI; i < startI + 1; i++)
+    {
+        for (int j = -startJ; j < startJ + 1; j++)
+        {
+            renderChunk(playerChunk[0] + i, playerChunk[1] + j);
+        }
+        
+    }
+}
+
+// Generate Map
+void generateWorld()
+{
+    
+}

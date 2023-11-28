@@ -1,5 +1,5 @@
 #!bin/sh
-echo "compiling..."
+echo "compiling...";
 g++ main.cpp -lGL -lglfw -lpthread -lXrandr -lXi -ldl include/glad.o -o main.bin
-echo "running..."
-./main.bin
+echo "running...";
+./main.bin 0

@@ -8,13 +8,14 @@ FastNoiseLite terrainHeight;
 
 int curChunk = 1;
 
+int mapColumnHeight;
+
 const int l = 16;
 const int b = 16;
-const int h = 20;
+const int h = 2;
 
 namespace BLOCKS{
     enum BlockState {
-        NULLBLOCK,
         AIR,
         SOLID,
         WATER
@@ -28,41 +29,50 @@ void initWorld() {
     terrainHeight.SetFractalType(FastNoiseLite::FractalType_FBm);
 }
 
-class Chunk{
-    public:
-        Chunk(int indexX, int indexZ) {
-            this->chunkIndexX = indexX;
-            this->chunkIndexZ = indexZ;
-        }
+BLOCKS::BlockState returnBlockState(int x, int y, int z, int chunkX, int chunkZ)
+{
+    float variation = terrainHeight.GetNoise((float)x + (l * chunkX), (float)z + (b * chunkZ));
+    mapColumnHeight = (int)floor((terrain.GetNoise((float)x + (l * chunkX),(float)z + (b * chunkZ)) + 1) * 1) + variation;
+    if (y <= mapColumnHeight) {
+        return BLOCKS::BlockState::SOLID;
+    } else {
+        return BLOCKS::BlockState::AIR;
+    }
+}
 
-        void generateChunk() {
-            for (int x = 0; x < l; x++)
-            {
-                for (int z = 0; z < b; z++)
-                {
-                    float variation = terrainHeight.GetNoise((float)x + (l * chunkIndexX), (float)z + (b * chunkIndexZ));
-                    int mapColumnHeight = (int)floor((terrain.GetNoise((float)x + (l * chunkIndexX),(float)z + (b * chunkIndexZ)) + 2) * 5) + variation;
-                    for (int y = 0; y < h; y++)
-                    {
-                        if (y < mapColumnHeight) {
-                            this->chunckData[x][z][y] = BLOCKS::BlockState::SOLID;
-                        } else {
-                            this->chunckData[x][z][y] = BLOCKS::BlockState::AIR;
-                        }
-                    }
-                }
-            }
-        }
+int height()
+{
+    return mapColumnHeight;
+}
 
-        BLOCKS::BlockState returnBlockState(int x, int y, int z)
-        {
-            return this->chunckData[x][z][y];
-        }
+// class Chunk{
+//     public:
+//         Chunk(int indexX, int indexZ) {
+//             this->chunkIndexX = indexX;
+//             this->chunkIndexZ = indexZ;
+//         }
 
-    private:
-        int chunkIndexX;
-        int chunkIndexZ;
-        BLOCKS::BlockState chunckData[l][b][h];
-};
+//         void generateChunk() {
+//             for (int x = 0; x < l; x++)
+//             {
+//                 for (int z = 0; z < b; z++)
+//                 {
+                    
+//                     for (int y = 0; y < h; y++)
+//                     {
+//                         if (y < mapColumnHeight) {
+//                             this->chunckData[x][z][y] = BLOCKS::BlockState::SOLID;
+//                         } else {
+//                             this->chunckData[x][z][y] = BLOCKS::BlockState::AIR;
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+
+//     private:
+//         int chunkIndexX;
+//         int chunkIndexZ;
+// };
 
 
