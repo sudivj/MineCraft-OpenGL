@@ -2,4 +2,4 @@
 echo "compiling...";
 g++ main.cpp -lGL -lglfw -lpthread -lXrandr -lXi -ldl include/glad.o -o main.bin
 echo "running...";
-./main.bin 0
+./main.bin
