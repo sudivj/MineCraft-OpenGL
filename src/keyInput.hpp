@@ -4,7 +4,7 @@
 #include <iostream>
 using namespace std;
 
-void processInput(GLFWwindow* window, Camera camera, float deltaTime)
+void processInput(GLFWwindow* window, Camera &camera, float deltaTime)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
