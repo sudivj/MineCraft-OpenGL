@@ -11,6 +11,7 @@
 
 #include "../../include/shader.h"
 #include "../../include/camera.h"
+#include "../player/player_data.hpp"
 #include "chunk.hpp"
 
 const int length = 5;
@@ -24,28 +25,27 @@ enum replace
     CHUNK_LEFT,
 };
 
+
+
 class world
 {
 private:
     vector<chunk *> world_vector_map;
-    // map<float, chunk *> sorted_world;
+    // map_data<float, chunk *> sorted_world;
 
     Shader *shader;
     Camera *camera;
+    player_data *player;
+
+    int x_off = (length - 1) / 2;
+    int y_off = (breadth - 1) / 2;
 
 public:
     chunk *world_map[length][breadth];
-    vector<vector<chunk *>> map;
+    chunk *map_test[length * breadth];
+    vector<vector<chunk *>> map_data;
 
-    // void sort_world()
-    // {
-    //     for (unsigned int i = 0; i < world_vector_map.size(); i++)
-    //     {
-    //         sorted_world[(float)i] = world_vector_map[i];
-    //     }
-    // }
-
-    void generate_world()
+    void generate_world(void)
     {
         std::cout << "generating world..." << std::endl;
         for (int x = 0; x < length; x++)
@@ -54,10 +54,11 @@ public:
             for (int y = 0; y < breadth; y++)
             {
                 std::cout << "  > generating chunk: X: " << x << " - Y: " << y << " ..." << std::endl;
-                temp_map.push_back(new chunk(x, y, shader, camera));
-                this->world_map[x][y] = new chunk(x, y, shader, camera);
+                int key = (x * length) + y;
+                // map_test[key] = new chunk(player->chunk_x + x, player->chunk_y + y, shader, camera);
+                this->map_test[key] = new chunk(x - x_off, y - y_off, shader, camera);
+                this->world_map[x][y] = new chunk(player->chunk_x + x - x_off, player->chunk_y + y - y_off, shader, camera);
             }
-            map.push_back(temp_map);
         }
     }
 
@@ -65,6 +66,8 @@ public:
     int chunk_y_offset = 0;
     void update_world(replace direction)
     {
+        std::cout << "test" << std::endl;
+        //generate_world();
         switch (direction)
         {
         case replace::CHUNK_FRONT:
@@ -76,11 +79,11 @@ public:
                 {
                     if (x < length - 1)
                     {
-                        this->map[x][y] = map[x + 1][y];
+                        this->world_map[x][y] = world_map[x + 1][y];
                     }
                     else
                     {
-                        this->map[x][y] = new chunk(x + chunk_x_offset, y + chunk_y_offset, shader, camera);
+                        this->world_map[x][y] = new chunk(player->chunk_x + x - x_off, player->chunk_y + y - y_off, shader, camera);
                     }
                 }
             }
@@ -95,11 +98,11 @@ public:
                 {
                     if (y < breadth - 1)
                     {
-                        this->map[x][y] = map[x][y + 1];
+                        this->world_map[x][y] = world_map[x][y + 1];
                     }
                     else
                     {
-                        this->map[x][y] = new chunk(x, y + chunk_y_offset, shader, camera);
+                        this->world_map[x][y] = new chunk(player->chunk_x + x - x_off, player->chunk_y + y - y_off, shader, camera);
                     }
                 }
             }
@@ -114,11 +117,11 @@ public:
                 {
                     if (r_x > 0)
                     {
-                        this->map[r_x][y] = map[r_x - 1][y];
+                        this->world_map[r_x][y] = world_map[r_x - 1][y];
                     }
                     else
                     {
-                        this->map[0][y] = new chunk(0 - chunk_x_offset, y, shader, camera);
+                        this->world_map[r_x][y] = new chunk(player->chunk_x + r_x - x_off, player->chunk_y + y - y_off, shader, camera);
                     }
                 }
             }
@@ -130,13 +133,14 @@ public:
             {
                 for (int y = 0; y < breadth; y++)
                 {
-                    if (y < breadth - 1)
+                    int r_y = breadth - (y + 1);
+                    if (r_y > 0)
                     {
-                        this->map[x][y] = map[x][y + 1];
+                        this->world_map[x][r_y] = world_map[x][r_y - 1];
                     }
                     else
                     {
-                        this->map[x][y] = new chunk(x, y + chunk_y_offset, shader, camera);
+                        this->world_map[x][r_y] = new chunk(player->chunk_x + x - x_off, player->chunk_y + r_y - y_off, shader, camera);
                     }
                 }
             }
@@ -150,28 +154,39 @@ public:
     void draw_world()
     {
         shader->setInt("screen", 1);
-        for (int x = 0; x < length; x++)
-        {
-            for (int y = 0; y < breadth; y++)
-            {
+        // for(int key = 0; key < length * breadth; key++) {
+        //     glEnable(GL_CULL_FACE);
+        //     map_test[key]->draw_chunk();
+        // }
+        for(int x = 0; x < length; x++) {
+            for(int y = 0; y < length; y++) {
                 glEnable(GL_CULL_FACE);
-                map[x][y]->draw_chunk();
+                world_map[x][y]->draw_chunk();
             }
         }
-        for (int x = 0; x < length; x++)
-        {
-            for (int y = 0; y < breadth; y++)
-            {
-                glDisable(GL_CULL_FACE);
-                map[x][y]->draw_water();
+        for(int x = 0; x < length; x++) {
+            for(int y = 0; y < length; y++) {
+                glEnable(GL_CULL_FACE);
+                world_map[x][y]->draw_water();
             }
         }
+        // for(map<int, chunk*>::const_iterator it = map_test.begin(); it != map_test.end(); it++)
+        // {
+        //     glEnable(GL_CULL_FACE);
+        //     it->second->draw_chunk();
+        // }
+        // for(map<int, chunk*>::const_iterator it = map_test.begin(); it != map_test.end(); it++)
+        // {
+        //     glDisable(GL_CULL_FACE);
+        //     it->second->draw_water();
+        // }
     }
 
-    world(Shader *shader_ID, Camera *cam_ID)
+    world(Shader *shader_ID, Camera *cam_ID, player_data *player_ID)
     {
         shader = shader_ID;
         camera = cam_ID;
+        player = player_ID;
         generate_world();
     }
 };

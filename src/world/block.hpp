@@ -15,9 +15,12 @@
 
 const int i_l = 16;
 const int i_b = 16;
-const int i_h = 32;
+const int i_h = 16;
 
-const int waterLevel = 10;
+const int base_h = 5;
+const int total_h = 32;
+
+const int waterLevel = 16;
 
 void draw_block(Shader &shader, float x, float y, float z, BlockFace face, Block name, int c_x, int c_y)
 {
@@ -27,34 +30,34 @@ void draw_block(Shader &shader, float x, float y, float z, BlockFace face, Block
     switch (face)
     {
     case BlockFace::BACK:
-        shader.setFloat("brightness", 0.05);
+        shader.setFloat("brightness", 0.07);
         shader.setInt("textureIndex", blocks[name]->blockTextureMap[face]);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDrawArrays(GL_TRIANGLES, BlockFace::BACK * 6, 6);
         break;
     case BlockFace::FRONT:
-        shader.setFloat("brightness", 0.02);
-        shader.setInt("textureIndex", blocks[name]->blockTextureMap[face]);
-        glDrawArrays(GL_TRIANGLES, 6, 6);
-        break;
-    case BlockFace::SIDE_LEFT:
         shader.setFloat("brightness", 0.04);
         shader.setInt("textureIndex", blocks[name]->blockTextureMap[face]);
-        glDrawArrays(GL_TRIANGLES, 12, 6);
+        glDrawArrays(GL_TRIANGLES, BlockFace::FRONT * 6, 6);
+        break;
+    case BlockFace::SIDE_LEFT:
+        shader.setFloat("brightness", 0.06);
+        shader.setInt("textureIndex", blocks[name]->blockTextureMap[face]);
+        glDrawArrays(GL_TRIANGLES, BlockFace::SIDE_LEFT * 6, 6);
         break;
     case BlockFace::SIDE_RIGHT:
-        shader.setFloat("brightness", 0.03);
+        shader.setFloat("brightness", 0.05);
         shader.setInt("textureIndex", blocks[name]->blockTextureMap[face]);
-        glDrawArrays(GL_TRIANGLES, 18, 6);
+        glDrawArrays(GL_TRIANGLES, BlockFace::SIDE_RIGHT * 6, 6);
         break;
     case BlockFace::BOTTOM:
-        shader.setFloat("brightness", 0.1);
+        shader.setFloat("brightness", 0.12);
         shader.setInt("textureIndex", blocks[name]->blockTextureMap[face]);
-        glDrawArrays(GL_TRIANGLES, 24, 6);
+        glDrawArrays(GL_TRIANGLES, BlockFace::BOTTOM * 6, 6);
         break;
     case BlockFace::TOP:
-        shader.setFloat("brightness", 0.01);
+        shader.setFloat("brightness", 0.03);
         shader.setInt("textureIndex", blocks[name]->blockTextureMap[face]);
-        glDrawArrays(GL_TRIANGLES, 30, 6);
+        glDrawArrays(GL_TRIANGLES, BlockFace::TOP * 6, 6);
         break;
     }
 }

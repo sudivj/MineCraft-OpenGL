@@ -34,6 +34,7 @@ struct player_data {
             prev_chunk_x = chunk_x;
             prev_chunk_y = chunk_y;
             update_vectors();
+            std::cout << "test" << std::endl;
             return true;
         }
         return false;
@@ -47,5 +48,18 @@ struct player_data {
     void update_direction() {
         direction_x = chunk_x - prev_chunk_x;
         direction_y = chunk_y - prev_chunk_y;
+    }
+
+    void update_chunk_position() {
+        if (this->x < 0) {
+            this->chunk_x = ceil(this->x / 16) - 1;
+        } else {
+            this->chunk_x = floor(this->x / 16);
+        }
+        if (this->z < 0) {
+            this->chunk_y = ceil(this->z / 16) - 1;
+        } else {
+            this->chunk_y = floor(this->z / 16);
+        }
     }
 };
