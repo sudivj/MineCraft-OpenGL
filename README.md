@@ -1,5 +1,5 @@
 # MineCraft-OpenGL
-A experimental project with OpenGL.
+An experimental project with OpenGL.
 
 ## Features: (For now)
 
