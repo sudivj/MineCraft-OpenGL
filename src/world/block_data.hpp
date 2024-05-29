@@ -25,12 +25,12 @@ enum Block
 
 enum BlockFace
 {
-    FRONT,
     BACK,
-    SIDE_RIGHT,
+    FRONT,
     SIDE_LEFT,
-    TOP,
+    SIDE_RIGHT,
     BOTTOM,
+    TOP,
     PLAIN
 };
 

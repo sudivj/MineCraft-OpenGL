@@ -116,30 +116,31 @@ int main(int argc, char *argv[])
 
     init_blocks();
 
-    world w(&ourShader, &camera);
+    world w(&ourShader, &camera, &player);
 
-    camera.Position.x = ((length - 1) / 2) * i_l;
-    camera.Position.z = ((breadth - 1) / 2) * i_b;
-    camera.Position.y = 15;
+    // camera.Position.x = ((length - 1) / 2) * i_l;
+    // camera.Position.z = ((breadth - 1) / 2) * i_b;
+    // camera.Position.y = 15;
 
-    glm::vec2 lastChunk = glm::vec2(((length - 1) / 2), ((breadth + 1) / 2));
-    glm::vec2 currentChunk = glm::vec2(((length - 1) / 2), ((breadth + 1) / 2));
+    // glm::vec2 lastChunk = glm::vec2(((length - 1) / 2), ((breadth + 1) / 2));
+    // glm::vec2 currentChunk = glm::vec2(((length - 1) / 2), ((breadth + 1) / 2));
 
-    player.x = camera.Position.x;
-    player.y = camera.Position.y;
-    player.z = camera.Position.z;
-    player.chunk_x = player.x / 16;
-    player.chunk_y = player.z / 16;
-    player.prev_chunk_x = player.chunk_x;
-    player.prev_chunk_y = player.chunk_y;
+    // player.x = camera.Position.x;
+    // player.y = camera.Position.y;
+    // player.z = camera.Position.z;
+    // player.chunk_x = player.x / 16;
+    // player.chunk_y = player.z / 16;
+    // player.prev_chunk_x = player.chunk_x;
+    // player.prev_chunk_y = player.chunk_y;
 
     while (!glfwWindowShouldClose(window))
     {
         player.x = camera.Position.x;
         player.y = camera.Position.y;
         player.z = camera.Position.z;
-        player.chunk_x = player.x / 16;
-        player.chunk_y = player.z / 16;
+        player.update_chunk_position();
+        // player.chunk_x = ceil(player.x / 16);
+        //player.chunk_y = ceil(player.z / 16);
         player.position = camera.Position;
         call_update_world(player.update_chunk(), w);
 
@@ -168,6 +169,11 @@ int main(int argc, char *argv[])
 
         w.draw_world();
         draw_flora(ourShader, 0, 12, 0, Block::GRASS);
+
+        // ourShader.setFloat("textureIndex", 39);
+        // glDrawArrays(GL_TRIANGLES, 36,  42);
+
+        ourShader.setInt("screen", 2);
 
         projection = glm::ortho(0.0f, static_cast<float>(SCREENWIDTH), 0.0f, static_cast<float>(SCREENHEIGHT));
         ourShader.setMat4("projection", projection);
@@ -252,17 +258,9 @@ void call_update_world(bool chunk, world &w)
 {
     if (chunk)
     {
-        if (player.direction_x > 0) {
-            w.update_world(replace::CHUNK_FRONT);
-        }
-        if (player.direction_y > 0) {
-            w.update_world(replace::CHUNK_RIGHT);
-        }
-        if (player.direction_x < 0) {
-            w.update_world(replace::CHUNK_BACK);
-        }
-        // if (player.direction_x > 0) {
-        //     w.update_world(replace::CHUNK_FRONT);
-        // }
+        if (player.direction_x > 0) w.update_world(replace::CHUNK_FRONT);
+        if (player.direction_x < 0) w.update_world(replace::CHUNK_BACK);
+        if (player.direction_y > 0) w.update_world(replace::CHUNK_RIGHT);
+        if (player.direction_y < 0) w.update_world(replace::CHUNK_LEFT);
     }
 }
