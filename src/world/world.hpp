@@ -14,8 +14,8 @@
 #include "../player/player_data.hpp"
 #include "chunk.hpp"
 
-const int length = 5;
-const int breadth = 5;
+const int length = 7;
+const int breadth = 7;
 
 enum replace
 {
