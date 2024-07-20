@@ -1,6 +1,11 @@
 # MineCraft-OpenGL
 An experimental project with OpenGL.
 
+<p align="center" markdown="1">
+    <img width="800" src="asset/snap.png" style="border-radius: 5px">
+</p>
+
+
 ## Features: (For now)
 
 - Infinite world generation.
