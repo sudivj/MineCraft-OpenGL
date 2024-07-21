@@ -2,7 +2,7 @@
 An experimental project with OpenGL.
 
 <p align="center" markdown="1">
-    <img width="800" src="asset/snap.png" style="border-radius: 5px">
+    <img width="800" src="assets/snap.png" style="border-radius: 5px">
 </p>
 
 
