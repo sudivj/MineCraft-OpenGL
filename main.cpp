@@ -12,10 +12,11 @@
 #include "include/constants.hpp"
 #include "src/GUI/gui.hpp"
 #include "src/player/player_data.hpp"
+#include "src/player/physics.hpp"
+#include "console.hpp"
+#include <unistd.h>
 
 using namespace std;
-
-player_data player;
 
 void call_update_world(bool chunk, world &w);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -37,12 +38,13 @@ float lastFrame = 0.0f;
 
 float lastTime = 0.0f;
 
+player_data player(&camera.Position);
+
 glm::ivec2 lastChunk;
 glm::ivec2 currentChunk;
 
 int main(int argc, char *argv[])
 {
-
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -105,6 +107,7 @@ int main(int argc, char *argv[])
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    glDepthFunc(GL_LESS);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 
@@ -117,33 +120,28 @@ int main(int argc, char *argv[])
 
     init_blocks();
 
+    camera.Position.y = 50.0f;
+
     world w(&ourShader, &camera, &player);
+    player_physics physics(&player, &w);
 
-    // camera.Position.x = ((length - 1) / 2) * i_l;
-    // camera.Position.z = ((breadth - 1) / 2) * i_b;
-    // camera.Position.y = 15;
-
-    // glm::vec2 lastChunk = glm::vec2(((length - 1) / 2), ((breadth + 1) / 2));
-    // glm::vec2 currentChunk = glm::vec2(((length - 1) / 2), ((breadth + 1) / 2));
-
-    // player.x = camera.Position.x;
-    // player.y = camera.Position.y;
-    // player.z = camera.Position.z;
-    // player.chunk_x = player.x / 16;
-    // player.chunk_y = player.z / 16;
-    // player.prev_chunk_x = player.chunk_x;
-    // player.prev_chunk_y = player.chunk_y;
+    clear();
 
     while (!glfwWindowShouldClose(window))
     {
-        player.x = camera.Position.x;
-        player.y = camera.Position.y;
-        player.z = camera.Position.z;
+        //console(player);
+
+        cout << player.w_block_count << endl;
+
+        player.x = (int)camera.Position.x;
+        player.y = (int)camera.Position.y;
+        player.z = (int)camera.Position.z;
+        player.update_position_in_chunk();
         player.update_chunk_position();
-        // player.chunk_x = ceil(player.x / 16);
-        //player.chunk_y = ceil(player.z / 16);
         player.position = camera.Position;
         call_update_world(player.update_chunk(), w);
+
+        //physics.gravity();
 
         glClearColor(0.212f, 0.78f, 0.949f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -169,11 +167,6 @@ int main(int argc, char *argv[])
         ourShader.setMat4("view", view);
 
         w.draw_world();
-        draw_flora(ourShader, 0, 12, 0, Block::GRASS);
-
-        // ourShader.setFloat("textureIndex", 39);
-        // glDrawArrays(GL_TRIANGLES, 36,  42);
-
         ourShader.setInt("screen", 2);
 
         projection = glm::ortho(0.0f, static_cast<float>(SCREENWIDTH), 0.0f, static_cast<float>(SCREENHEIGHT));
@@ -186,6 +179,7 @@ int main(int argc, char *argv[])
         glBindVertexArray(VAO);
         glfwSwapBuffers(window);
         glfwPollEvents();
+        glClear(GL_DEPTH_BUFFER_BIT);
     }
 
     glDeleteVertexArrays(1, &VAO);

@@ -20,7 +20,7 @@ const int i_h = 16;
 const int base_h = 5;
 const int total_h = 32;
 
-const int waterLevel = 16;
+const int waterLevel = 10;
 
 void draw_block(Shader &shader, float x, float y, float z, BlockFace face, Block name, int c_x, int c_y)
 {
