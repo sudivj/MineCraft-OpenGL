@@ -14,8 +14,8 @@
 #include "../player/player_data.hpp"
 #include "chunk.hpp"
 
-const int length = 7;
-const int breadth = 7;
+const int length = 5;
+const int breadth = 5;
 
 enum replace
 {
@@ -30,49 +30,44 @@ enum replace
 class world
 {
 private:
-    vector<chunk *> world_vector_map;
-    // map_data<float, chunk *> sorted_world;
+
+    int world_block_count = 0;
 
     Shader *shader;
     Camera *camera;
     player_data *player;
 
+public:
     int x_off = (length - 1) / 2;
     int y_off = (breadth - 1) / 2;
 
-public:
+    chunk *world_mid;
+
     chunk *world_map[length][breadth];
-    chunk *map_test[length * breadth];
-    vector<vector<chunk *>> map_data;
 
     void generate_world(void)
     {
         std::cout << "generating world..." << std::endl;
         for (int x = 0; x < length; x++)
         {
-            vector<chunk *> temp_map;
             for (int y = 0; y < breadth; y++)
             {
                 std::cout << "  > generating chunk: X: " << x << " - Y: " << y << " ..." << std::endl;
-                int key = (x * length) + y;
-                // map_test[key] = new chunk(player->chunk_x + x, player->chunk_y + y, shader, camera);
-                this->map_test[key] = new chunk(x - x_off, y - y_off, shader, camera);
                 this->world_map[x][y] = new chunk(player->chunk_x + x - x_off, player->chunk_y + y - y_off, shader, camera);
             }
         }
+        world_mid = world_map[x_off][y_off];
     }
 
     int chunk_x_offset = 0;
     int chunk_y_offset = 0;
     void update_world(replace direction)
     {
-        std::cout << "test" << std::endl;
         //generate_world();
         switch (direction)
         {
         case replace::CHUNK_FRONT:
             chunk_x_offset++;
-            cout << "x " << chunk_x_offset << endl;
             for (int x = 0; x < length; x++)
             {
                 for (int y = 0; y < breadth; y++)
@@ -91,7 +86,6 @@ public:
         
         case replace::CHUNK_RIGHT:
             chunk_y_offset++;
-            cout << "y " << chunk_y_offset << endl;
             for (int x = 0; x < length; x++)
             {
                 for (int y = 0; y < breadth; y++)
@@ -109,7 +103,6 @@ public:
             break;
         case replace::CHUNK_BACK:
             chunk_x_offset--;
-            cout << "x " << chunk_x_offset << endl;
             for (int x = 0; x < length; x++)
             {
                 int r_x = length - (x + 1);
@@ -128,7 +121,6 @@ public:
             break;
         case replace::CHUNK_LEFT:
             chunk_y_offset++;
-            cout << "y " << chunk_y_offset << endl;
             for (int x = 0; x < length; x++)
             {
                 for (int y = 0; y < breadth; y++)
@@ -149,15 +141,14 @@ public:
         default:
             break;
         }
+        world_mid = world_map[x_off][y_off];
     }
 
     void draw_world()
     {
+        world_block_count = 0;
+
         shader->setInt("screen", 1);
-        // for(int key = 0; key < length * breadth; key++) {
-        //     glEnable(GL_CULL_FACE);
-        //     map_test[key]->draw_chunk();
-        // }
         for(int x = 0; x < length; x++) {
             for(int y = 0; y < length; y++) {
                 glEnable(GL_CULL_FACE);
@@ -168,18 +159,11 @@ public:
             for(int y = 0; y < length; y++) {
                 glEnable(GL_CULL_FACE);
                 world_map[x][y]->draw_water();
+                world_block_count += world_map[x][y]->block_count;
             }
         }
-        // for(map<int, chunk*>::const_iterator it = map_test.begin(); it != map_test.end(); it++)
-        // {
-        //     glEnable(GL_CULL_FACE);
-        //     it->second->draw_chunk();
-        // }
-        // for(map<int, chunk*>::const_iterator it = map_test.begin(); it != map_test.end(); it++)
-        // {
-        //     glDisable(GL_CULL_FACE);
-        //     it->second->draw_water();
-        // }
+
+        player->w_block_count = world_block_count;
     }
 
     world(Shader *shader_ID, Camera *cam_ID, player_data *player_ID)

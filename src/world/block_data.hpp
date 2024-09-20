@@ -4,6 +4,7 @@
 
 #include <math.h>
 #include <iostream>
+#include <vector>
 
 enum BlockState
 {
@@ -32,6 +33,19 @@ enum BlockFace
     BOTTOM,
     TOP,
     PLAIN
+};
+
+struct block_mesh
+{
+    Block name;
+    glm::vec3 pos;
+    std::vector<BlockFace> faces;
+
+    block_mesh(Block b_name, glm::vec3 b_pos)
+    {
+        name = b_name;
+        pos = b_pos;
+    }
 };
 
 class block_data
