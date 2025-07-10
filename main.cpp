@@ -14,15 +14,21 @@
 #include "src/player/player_data.hpp"
 #include "src/player/physics.hpp"
 #include "console.hpp"
+#include "src/GUI/text.hpp"
+
 #include <unistd.h>
 
 using namespace std;
 
+bool pressed = false;
+
 void call_update_world(bool chunk, world &w);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void para_mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window, Shader &shader, world &w);
+void check_button_click(GLFWwindow *window);
 int get_FPS();
 
 // Camera camera(glm::vec3((float)(16 * 2 + 16 / 2), 15.0f, (float)(16 * 2 + 16 / 2)));
@@ -30,6 +36,11 @@ Camera camera(glm::vec3(0.0, 0.0, 0.0));
 float lastX = SCREENWIDTH / 2.0f;
 float lastY = SCREENHEIGHT / 2.0f;
 bool firstMouse = true;
+
+int mouse_x = 0;
+int mouse_y = 0;
+
+bool mouse_captured = false;
 
 bool space_pressed = false;
 
@@ -49,8 +60,8 @@ int main(int argc, char *argv[])
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    // glfwWindowHint(GLFW_SAMPLES, 4);
 
+    GLFWwindow *para = glfwCreateWindow(800, 400, "Test", NULL, NULL);
     GLFWwindow *window = glfwCreateWindow(SCREENWIDTH, SCREENHEIGHT, "MineCraft - OpenGL", NULL, NULL);
 
     if (window == NULL)
@@ -66,6 +77,7 @@ int main(int argc, char *argv[])
     glfwSetScrollCallback(window, scroll_callback);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    mouse_captured = true;
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -73,7 +85,10 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    Shader ourShader("src/Shaders/shaderVert.glsl", "src/Shaders/shaderFrag.glsl");
+    Shader ourShader("src/Shaders/shader.vert.glsl", "src/Shaders/shader.frag.glsl");
+
+    GLuint FBO;
+    GLuint DBO;
 
     unsigned int VBO, VAO;
 
@@ -94,10 +109,6 @@ int main(int argc, char *argv[])
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindVertexArray(0);
-
-    init_freetype();
-    init_text_vertex();
-    set_shader_and_camera(&ourShader, &camera);
 
     glFrontFace(GL_CW);
     glCullFace(GL_FRONT);
@@ -127,11 +138,29 @@ int main(int argc, char *argv[])
 
     clear();
 
-    while (!glfwWindowShouldClose(window))
-    {
-        //console(player);
+    glfwMakeContextCurrent(para);
+    glfwSetCursorPosCallback(para, para_mouse_callback);
 
-        cout << player.w_block_count << endl;
+    Shader textShader("src/Shaders/shader.vert.glsl", "src/Shaders/shader.frag.glsl");
+
+    init_freetype();
+    init_text_vertex();
+    set_shader_and_camera(&textShader, &camera);
+
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glDepthFunc(GL_LESS);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+
+    while (!glfwWindowShouldClose(window) and !glfwWindowShouldClose(window))
+    {
+        glfwMakeContextCurrent(window);
+
+        textShader.setInt("screen", 1);
+
+        // cout << player.w_block_count << endl;
 
         player.x = (int)camera.Position.x;
         player.y = (int)camera.Position.y;
@@ -141,15 +170,11 @@ int main(int argc, char *argv[])
         player.position = camera.Position;
         call_update_world(player.update_chunk(), w);
 
-        //physics.gravity();
-
         glClearColor(0.212f, 0.78f, 0.949f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, atlas);
-
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         player.fps = get_FPS();
 
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -167,23 +192,56 @@ int main(int argc, char *argv[])
         ourShader.setMat4("view", view);
 
         w.draw_world();
-        ourShader.setInt("screen", 2);
 
-        projection = glm::ortho(0.0f, static_cast<float>(SCREENWIDTH), 0.0f, static_cast<float>(SCREENHEIGHT));
-        ourShader.setMat4("projection", projection);
+        // draw_gui(player);
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-        draw_gui(player);
 
         glBindVertexArray(VAO);
         glfwSwapBuffers(window);
         glfwPollEvents();
         glClear(GL_DEPTH_BUFFER_BIT);
+
+        // glfwMakeContextCurrent(para);
+
+        // glClearColor(0.212f, 0.78f, 0.949f, 1.0f);
+        // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // projection = glm::ortho(0.0f, static_cast<float>(800), 0.0f, static_cast<float>(400));
+        // textShader.setMat4("projection", projection);
+
+        // textShader.setInt("screen", 2);
+
+        // // draw_gui(player);
+        // check_button_click(para);
+
+        // RenderText(textShader, std::to_string(mouse_x) + " - " + std::to_string(mouse_y), 10.0f, 10.0f, 0.7f, glm::vec3(1.0, 1.0f, 1.0f));
+
+        // // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // // glBindVertexArray(VAO);
+        // // glfwSwapBuffers(para);
+        // // glBlitFramebuffer(
+        // //     640 - 256,
+        // //     360 - 144,
+        // //     640 + 256,
+        // //     360 + 144,
+        // //     0,
+        // //     0,
+        // //     640,
+        // //     360,
+        // //     GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
+        // //     GL_NEAREST);
+        // glBindVertexArray(VAO);
+        // glfwSwapBuffers(para);
+        // glfwPollEvents();
+        // glClear(GL_DEPTH_BUFFER_BIT);
     }
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+    // glDeleteFramebuffers(1, &FBO);
+    // glDeleteFramebuffers(1, &DBO);
 
     glfwTerminate();
 
@@ -213,7 +271,32 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
     lastX = xpos;
     lastY = ypos;
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    if (mouse_captured)
+    {
+        camera.ProcessMouseMovement(xoffset, yoffset);
+    }
+}
+
+void para_mouse_callback(GLFWwindow *window, double xpos, double ypos)
+{
+    mouse_x = xpos;
+    mouse_y = ypos;
+}
+
+void check_button_click(GLFWwindow *window)
+{
+    if (mouse_x < 100 && mouse_y < 40)
+    {
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && !pressed)
+        {
+            std::cout << "pressed" << std::endl;
+            pressed = true;
+        }
+        else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
+        {
+            pressed = false;
+        }
+    }
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
@@ -238,6 +321,17 @@ void processInput(GLFWwindow *window, Shader &shader, world &w)
         camera.ProcessKeyboard(UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
+
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && mouse_captured)
+    {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        mouse_captured = false;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && mouse_captured == false)
+    {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        mouse_captured = true;
+    }
 }
 
 int get_FPS()
@@ -253,9 +347,13 @@ void call_update_world(bool chunk, world &w)
 {
     if (chunk)
     {
-        if (player.direction_x > 0) w.update_world(replace::CHUNK_FRONT);
-        if (player.direction_x < 0) w.update_world(replace::CHUNK_BACK);
-        if (player.direction_y > 0) w.update_world(replace::CHUNK_RIGHT);
-        if (player.direction_y < 0) w.update_world(replace::CHUNK_LEFT);
+        if (player.direction_x > 0)
+            w.update_world(replace::CHUNK_FRONT);
+        if (player.direction_x < 0)
+            w.update_world(replace::CHUNK_BACK);
+        if (player.direction_y > 0)
+            w.update_world(replace::CHUNK_RIGHT);
+        if (player.direction_y < 0)
+            w.update_world(replace::CHUNK_LEFT);
     }
 }

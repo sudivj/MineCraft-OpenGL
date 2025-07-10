@@ -25,8 +25,6 @@ enum replace
     CHUNK_LEFT,
 };
 
-
-
 class world
 {
 private:

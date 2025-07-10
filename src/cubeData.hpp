@@ -87,11 +87,11 @@ float vertices[] = {
     -0.5f, -0.5f, 0.5f, 0.0615835777126f, 0.0f,     // bottom-right
     -0.5f, -0.5f, -0.5f, 0.0615835777126f, 0.0615835777126f, // top-right
     // Top face
-    -0.5f, 0.5f, -0.5f, 0.0f, 0.0615835777126f,   // top-left
-    0.5f, 0.5f, 0.5f, 0.0615835777126f, 0.0f,     // bottom-right
-    0.5f, 0.5f, -0.5f, 0.0615835777126f, 0.0615835777126f, // top-right
-    0.5f, 0.5f, 0.5f, 0.0615835777126f, 0.0f,     // bottom-right
-    -0.5f, 0.5f, -0.5f, 0.0f, 0.0615835777126f,   // top-left
+    -0.5f, 0.5f, -0.5f, 0.0f, 0.0625f,   // top-left
+    0.5f, 0.5f, 0.5f, 0.0625f, 0.0f,     // bottom-right
+    0.5f, 0.5f, -0.5f, 0.0625f, 0.0625f, // top-right
+    0.5f, 0.5f, 0.5f, 0.0625f, 0.0f,     // bottom-right
+    -0.5f, 0.5f, -0.5f, 0.0f, 0.0625f,   // top-left
     -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,        // bottom-left
     // Plain face
     0.5f, 0.5f, 0.0f, 0.0f, 0.0f,         // top-right
